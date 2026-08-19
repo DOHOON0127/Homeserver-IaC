@@ -1,0 +1,3 @@
+---
+vault_wg_server_private_key: "REPLACE_WITH_SERVER_PRIVATE_KEY"
+vault_grafana_admin_password: "REPLACE_ME"

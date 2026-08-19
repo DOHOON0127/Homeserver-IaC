@@ -1,0 +1,33 @@
+---
+- name: Docker 설치 여부 확인
+  ansible.builtin.command: docker --version
+  register: docker_check
+  changed_when: false
+  failed_when: false
+
+- name: Docker 설치 (없는 경우)
+  ansible.builtin.shell: curl -fsSL https://get.docker.com | sh
+  when: docker_check.rc != 0
+
+- name: 관측성 스택 디렉토리 배포
+  ansible.builtin.copy:
+    src: "../../../observability-stack/"
+    dest: /home/{{ ansible_user }}/observability-stack/
+    mode: preserve
+
+- name: alertmanager.yml 실제 값으로 덮어쓰기 (텔레그램 토큰/chat_id는 vault 관리)
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: /home/{{ ansible_user }}/observability-stack/alertmanager/alertmanager.yml
+    mode: "0600"
+
+- name: .env 파일 배포 (vault 변수 사용)
+  ansible.builtin.template:
+    src: env.j2
+    dest: /home/{{ ansible_user }}/observability-stack/.env
+    mode: "0600"
+
+- name: 관측성 스택 기동
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /home/{{ ansible_user }}/observability-stack/

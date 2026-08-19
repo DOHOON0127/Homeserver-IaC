@@ -1,0 +1,55 @@
+---
+- name: fail2ban 설치
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+    update_cache: true
+
+- name: DEFAULT 섹션 ignoreip 설정
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: DEFAULT
+    option: ignoreip
+    value: "{{ fail2ban_ignoreip }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart fail2ban
+
+- name: sshd 잡 활성화
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: sshd
+    option: enabled
+    value: "true"
+  notify: restart fail2ban
+
+- name: sshd 잡 maxretry 설정
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: sshd
+    option: maxretry
+    value: "{{ fail2ban_maxretry }}"
+  notify: restart fail2ban
+
+- name: sshd 잡 findtime 설정
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: sshd
+    option: findtime
+    value: "{{ fail2ban_findtime }}"
+  notify: restart fail2ban
+
+- name: sshd 잡 bantime 설정
+  community.general.ini_file:
+    path: /etc/fail2ban/jail.local
+    section: sshd
+    option: bantime
+    value: "{{ fail2ban_bantime }}"
+  notify: restart fail2ban
+
+- name: fail2ban 서비스 활성화
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started

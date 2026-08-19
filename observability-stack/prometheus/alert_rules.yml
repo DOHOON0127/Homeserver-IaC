@@ -1,0 +1,47 @@
+groups:
+  - name: host_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU 사용률 85% 초과 (5분 지속)"
+          description: "{{ $labels.instance }} CPU 사용률 {{ $value | printf \"%.1f\" }}%"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "메모리 사용률 85% 초과 (5분 지속)"
+          description: "{{ $labels.instance }} 메모리 사용률 {{ $value | printf \"%.1f\" }}%"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "루트 파티션 여유공간 15% 미만"
+          description: "{{ $labels.instance }} 남은 공간 {{ $value | printf \"%.1f\" }}%"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} 타겟 다운"
+          description: "{{ $labels.instance }}의 {{ $labels.job }}이 2분 이상 응답 없음"
+
+      - alert: WireGuardHandshakeStale
+        expr: wireguard_latest_handshake_seconds > 180
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WireGuard 핸드셰이크 3분 이상 갱신 안 됨"
+          description: "피어 {{ $labels.public_key }} 핸드셰이크 지연 {{ $value }}초"

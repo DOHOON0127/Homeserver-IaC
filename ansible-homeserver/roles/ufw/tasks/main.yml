@@ -1,0 +1,37 @@
+---
+- name: UFW 설치
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: 기본 정책 설정
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+- name: WireGuard 포트만 외부에 개방
+  community.general.ufw:
+    rule: allow
+    port: "51820"
+    proto: udp
+
+- name: wg0 인터페이스로 들어오는 트래픽 전체 허용
+  community.general.ufw:
+    rule: allow
+    interface: wg0
+    direction: in
+
+- name: 도커 내부 네트워크에서 wireguard-exporter로의 접근 허용
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ docker_network_subnet }}"
+    port: "9586"
+    proto: tcp
+
+- name: UFW 활성화
+  community.general.ufw:
+    state: enabled

@@ -1,0 +1,21 @@
+---
+- name: WireGuard 설치
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+    update_cache: true
+
+- name: wg0.conf 배포 (ansible-vault로 암호화된 값 사용)
+  ansible.builtin.template:
+    src: wg0.conf.j2
+    dest: /etc/wireguard/wg0.conf
+    owner: root
+    group: root
+    mode: "0600"
+  notify: restart wireguard
+
+- name: wg-quick@wg0 서비스 활성화
+  ansible.builtin.systemd:
+    name: wg-quick@wg0
+    enabled: true
+    state: started

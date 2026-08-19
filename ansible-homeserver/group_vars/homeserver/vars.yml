@@ -1,0 +1,12 @@
+---
+wg_server_address: "10.0.0.1/24"
+wg_peers:
+  - public_key: "TqRST64yhiTObtOylCVXqFq5mDDonCu/SmAHqu8GLyk="
+    allowed_ips: "10.0.0.2/32"
+
+fail2ban_ignoreip: "127.0.0.1/8 ::1 172.30.1.0/24"
+fail2ban_bantime: "3600"
+fail2ban_findtime: "600"
+fail2ban_maxretry: 5
+
+docker_network_subnet: "172.18.0.0/16"

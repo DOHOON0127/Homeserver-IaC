@@ -1,0 +1,8 @@
+---
+- hosts: homeserver
+  become: true
+  roles:
+    - ufw
+    - fail2ban
+    - wireguard
+    - monitoring
