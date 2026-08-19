@@ -16,6 +16,7 @@
     │     ├── cAdvisor (컨테이너별 지표)
     │     ├── wireguard-exporter (VPN 핸드셰이크 상태)
     │     ├── Alertmanager (알림 라우팅 → Telegram)
+    │     ├── Loki + Promtail (컨테이너 로그 수집·검색)
     │     └── Grafana (대시보드)
     │
     └── UFW / Fail2Ban / WireGuard (Ansible로 코드화)
@@ -23,7 +24,7 @@
 
 ## 구성
 
-- **observability-stack/** — Prometheus + Grafana + Alertmanager + cAdvisor + node-exporter + wireguard-exporter를 Docker Compose로 배포. 알림 룰 5종(CPU/메모리/디스크 임계치, 서비스 다운, WireGuard 핸드셰이크 정체) 포함.
+- **observability-stack/** — Prometheus + Grafana + Alertmanager + cAdvisor + node-exporter + wireguard-exporter + Loki/Promtail을 Docker Compose로 배포. 알림 룰 5종(CPU/메모리/디스크 임계치, 서비스 다운, WireGuard 핸드셰이크 정체)과 컨테이너 로그 수집·검색까지 포함해 지표·알림·로그 세 축을 모두 커버.
 - **ansible-homeserver/** — UFW·Fail2Ban·WireGuard 설정과 관측성 스택 배포를 Ansible 롤로 코드화. 비밀값(WireGuard 개인키, Grafana 비밀번호, Telegram 봇 토큰)은 Ansible Vault로 분리 관리.
 
 ## 설계 결정 및 트러블슈팅
@@ -36,6 +37,7 @@
 - **dry-run이 실제 장애를 사전에 차단** — 변수 파일의 오타(`10.8.0.1/24`)로 인해 실제 적용 시 WireGuard 서버 주소가 바뀌면서 VPN이 끊길 뻔한 상황을 `--check --diff`로 사전에 발견. 원격 서버 설정 변경은 실제 적용 전 반드시 dry-run으로 diff를 확인하는 것을 원칙으로 삼음.
 - **비밀값과 코드의 분리** — 최초 설계에서는 로컬 관측성 스택 폴더를 그대로 서버에 복사하는 방식이라, 서버에서 직접 수정한 Telegram 봇 토큰이 재배포 시 되돌아갈 위험이 있었음. 해당 값을 Ansible Vault 관리 변수로 승격하고 별도 템플릿 태스크로 분리해, 배포와 비밀 관리를 동시에 안전하게 만듦.
 - **Fail2Ban 설정을 파일 전체가 아닌 변경분만 관리** — 실제 `jail.local`은 Debian 기본 설정 전체를 복사한 파일이었음. 파일 전체를 템플릿으로 관리하는 대신 실제로 커스터마이징된 값(`ignoreip`, `sshd` 잡의 재시도/차단 시간)만 `ini_file` 모듈로 targeted 관리해, 유지보수 범위를 최소화.
+- **로그 검증 대상을 잘못 고른 경험** — 로그 파이프라인(Loki/Promtail) 검증 시 알림 처리를 담당하는 Alertmanager 로그로 확인하려 했으나, Alertmanager는 알림을 정상적으로 처리·전송할 때 별도 로그를 남기지 않는 것으로 확인됨(에러 시에만 로그 기록). Promtail 자체 로그(`added Docker target` 정상 등록)와, 재시작 시 반드시 로그를 남기는 node-exporter로 대상을 바꿔 재현해 파이프라인 정상 동작을 최종 검증함 — 검증 대상 선정도 관측 대상의 실제 로깅 동작을 먼저 파악해야 한다는 교훈.
 
 ## 사용법
 
@@ -66,4 +68,4 @@ ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass
 
 ## 스택
 
-Docker Compose · Prometheus · Grafana · Alertmanager · cAdvisor · Ansible · Ansible Vault · WireGuard · UFW · Fail2Ban
+Docker Compose · Prometheus · Grafana · Alertmanager · cAdvisor · Loki · Promtail · Ansible · Ansible Vault · WireGuard · UFW · Fail2Ban
