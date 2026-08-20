@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/DOHOON0127/infra-bot.git
+    repoURL: https://github.com/DOHOON0127/HomeServer-Infra-Bot.git
     targetRevision: main
     path: k8s-manifests
   destination:
