@@ -4,7 +4,7 @@
 
 ## 아키텍처
 
-\`\`\`
+```
 [외부(카페 등)]
     │ WireGuard 암호화 터널
     ▼
@@ -24,7 +24,7 @@
     │           └── 실제 운영 워크로드: infra-bot (텔레그램 인프라 조회 봇)
     │
     └── UFW / Fail2Ban / WireGuard (Ansible로 코드화)
-\`\`\`
+```
 
 ## 구성
 
@@ -51,16 +51,16 @@
 
 ### 1. observability-stack
 
-\`\`\`bash
+```bash
 cp observability-stack/.env.example observability-stack/.env
 # .env에 WG_IP, GRAFANA_ADMIN_PASSWORD 채운 뒤
 scp -r observability-stack <host>:~/
 ssh <host> "cd observability-stack && docker compose up -d"
-\`\`\`
+```
 
 ### 2. ansible-homeserver
 
-\`\`\`bash
+```bash
 cd ansible-homeserver
 ansible-galaxy collection install -r requirements.yml
 cp group_vars/homeserver/vault.yml.example group_vars/homeserver/vault.yml
@@ -72,11 +72,11 @@ ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass --check --diff
 
 # 확인 후 실제 적용
 ansible-playbook -i inventory.ini playbook.yml --ask-vault-pass
-\`\`\`
+```
 
 ### 3. k3s + ArgoCD (GitOps)
 
-\`\`\`bash
+```bash
 # Pi에서 — 최초 1회만
 curl -sfL https://get.k3s.io | sh -
 # cgroup_disable=memory 관련 이슈가 있으면 위 트러블슈팅 항목 참고
@@ -85,7 +85,7 @@ kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl apply -f k8s-manifests/argocd-application.yaml
 kubectl apply -f k8s-manifests/infra-bot-application.yaml
-\`\`\`
+```
 
 이후로는 각 앱 저장소(`k8s-manifests/` 경로)에 push하는 것만으로 ArgoCD가 자동 동기화함(기본 3분 주기, 즉시 반영하려면 `kubectl patch application <name> -n argocd --type merge -p '{"operation":{"sync":{}}}'`).
 
